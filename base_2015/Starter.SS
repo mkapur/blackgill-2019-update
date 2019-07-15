@@ -1,6 +1,6 @@
 #C starter comment here
-bgill.2017finaltuned.dat
-bgill.2017finaltuned.ctl
+bgill.2017_dat.dat
+bgill.2017_control.ctl
 1 	# 0=use init values in control file; 1=use ss3.par
 1 	# run display detail (0,1,2)
 1 	# detailed age-structured reports in REPORT.SSO (0,1)
