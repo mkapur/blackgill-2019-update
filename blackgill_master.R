@@ -1,7 +1,7 @@
 require(dplyr)
 require(readr)
 require(purrr)
-devtools::install_github("mkapur/kaputils", dependencies = F)
+# devtools::install_github("mkapur/kaputils", dependencies = F)
 library(kaputils)
 # devtools::install_github("r4ss/r4ss@2663227")
 # devtools::install_github("r4ss/r4ss") ## post writeforecast merge
@@ -15,7 +15,7 @@ bg.statevals$base <- c(0.063,0.065)
 bg.statevals$high <- c(0.086,0.089)
 compname <- c('mkapur',"Maia Kapur")[1]
 
-for(state in c('low','high')){
+for(state in c('base','low','high')){
   
   rootdir.temp <- paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base")
   if(state == 'base'){ ## only read in once per region
@@ -148,7 +148,7 @@ for(catch in c('constant','ABC','upper')){ ## loop catch scen
       # filter(Yr %in% YOI) %>%
       # select(-Yr) %>% rowSums(.) %>% round(.,2)
       
-      dec_table$catch[idxr:(idxr+length(YOI)-1)] <- round(catchvals$Catch_Used,2)
+      dec_table$catch[idxr:(idxr+length(YOI)-1)] <- round(catchvals$Catch_Used,0)
       
     }
     # read.csv(paste0(tempdir,"/tempForeCatch.csv"))
@@ -158,10 +158,10 @@ for(catch in c('constant','ABC','upper')){ ## loop catch scen
     dec_table$Scenario[idxr:(idxr+length(YOI)-1)] <- rep(catch, length(idxr:(idxr+length(YOI)-1)))
     
     
-    dec_table[idxr:(idxr+length(YOI)-1),idxc*2+2] <-  mod$derived_quants[grep(paste0("SSB_",YOI,collapse = "|"),
-                                                                              mod$derived_quants$Label),"Value"]
-    dec_table[idxr:(idxr+length(YOI)-1),idxc*2+3] <-  mod$derived_quants[grep(paste0("Bratio_",YOI,collapse = "|"),
-                                                                              mod$derived_quants$Label),"Value"]
+    dec_table[idxr:(idxr+length(YOI)-1),idxc*2+2] <-  round_any(mod$derived_quants[grep(paste0("SSB_",YOI,collapse = "|"),
+                                                                              mod$derived_quants$Label),"Value"],1000)/1000
+    dec_table[idxr:(idxr+length(YOI)-1),idxc*2+3] <-  round(mod$derived_quants[grep(paste0("Bratio_",YOI,collapse = "|"),
+                                                                              mod$derived_quants$Label),"Value"],2)
     idxc <- idxc+1 ## move to next set of columns as state updates
     # idxc <- idxc+3; idxr <-
     #     df["Depletion",y] <- paste0(round(basemod10$derived_quants[grep(paste0("Bratio_",YOI[y],collapse = "|"), basemod10$derived_quants$Label),"Value"],3)*100,"%")
@@ -182,8 +182,37 @@ write.csv(dec_table,
 
 
 ## just generate the plots
-bg.mod <- SS_output("C:/Users/mkapur/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/forecast2021")
-# save(bg.mod, file = paste0(getwd(),'/blackgill_2030_base.Rdata'))
-bg.mod$derived_quants[grep(paste0("ForeCatch_",2015:2030,collapse = "|"), bg.mod$derived_quants$Label),"Value"] ## start around 18
+bg.mod <- SS_output("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/forecast2021")
+# save(bg.mod, file = paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/blackgill_2030_base.Rdata"))
+View(bg.mod$derived_quants[grep(paste0("ForeCatch_",2021:2030,collapse = "|"), bg.mod$derived_quants$Label),"Value"]) ## start around 50
+bg.mod$derived_quants[grep(paste0("OFLCatch_",2021:2030,collapse = "|"), bg.mod$derived_quants$Label),"Value"] ## start around 50
 
-SS_plots(bg.mod, png = T, dir = getwd())
+# View(bg.mod$timeseries[, grepl('Yr|dead[(]B', names(bg.mod$timeseries))] %>% filter(Yr %in% 2021:2030) %>% select(-Yr) %>% rowSums(.))
+## check that 2017 spbio matches between models
+bg.mod <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/forecast2030"))
+bg.base <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/base_2015 - Copy"))
+# bg.mod$derived_quants[grep(paste0("SpBio_",2017,collapse = "|"), bg.mod$derived_quants$Label),"Value"] ## start around 50
+bg.mod$timeseries$SpawnBio[bg.mod$timeseries$Yr == 2017] == bg.base$timeseries$SpawnBio[bg.base$timeseries$Yr == 2017]
+bg.mod$timeseries$SpawnBio[bg.mod$timeseries$Yr == 2018] == bg.base$timeseries$SpawnBio[bg.base$timeseries$Yr == 2018]
+
+bg.upbase <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/upper_base"))
+bg.upbase2 <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/prediscard_0715/upper_base"))
+
+bg.mod$timeseries$SpawnBio[bg.mod$timeseries$Yr == 2021]
+
+bg.upbase$timeseries$SpawnBio[bg.upbase$timeseries$Yr == 2021]
+bg.upbase2$timeseries$SpawnBio[bg.upbase2$timeseries$Yr == 2021]
+
+SS_plots(bg.mod, png = T, dir = rootdir)
+
+
+bg.mod.upper <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/upper_base/"))
+bg.mod.upper$timeseries[, grepl('Yr|dead[(]B', names(bg.mod.upper$timeseries))] %>% filter(Yr %in% 2021:2030) %>% select(-Yr) %>% rowSums(.)
+
+iterOFL <- NULL; i = 1
+for(y in 2021:2030){
+  modNother <- SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/forecast",y))
+  iterOFL[i] <- modNother$derived_quants[grep(paste0("OFLCatch_",y,collapse = "|"), modNother$derived_quants$Label),"Value"]
+  i = i+1
+}
+View(iterOFL)
