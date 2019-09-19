@@ -216,3 +216,40 @@ for(y in 2021:2030){
   i = i+1
 }
 View(iterOFL)
+
+
+rd <- paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/") ## a directory with all 9 model runs
+
+iterOFL <- data.frame('MOD' = NA,'YEAR' = NA, 'OFL' = NA, 'FORECATCH' = NA, 
+                      'DEADBIO' = NA,
+                      'REALIZEDBUFFER' = NA,
+                      'TRUEBUFFER_045' =  NA,
+                      'TRUEBUFFER_025' = NA) ## sigma 45)
+i <- 1
+for(l in seq_along(list.dirs(rd, recursive = F))){
+  modNother <- SS_output(list.dirs(rd, recursive = F)[l], covar = FALSE)
+  modNother <-  SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_high/"))
+  modNother <-  SS_output(paste0("C:/Users/",compname,"/Dropbox/UW/assessments/blackgill-2019-update/ABC_base/forecasts/forecast2030/"))
+  
+  for(y in 2019:2030){
+    # iterOFL[i,'MOD'] <- paste0(basename(list.dirs(rd, recursive = F)[l]))
+    iterOFL[i,'YEAR'] <- y
+    iterOFL[i,'OFL'] <- modNother$derived_quants[grep(paste0("OFLCatch_",y,collapse = "|"), modNother$derived_quants$Label),"Value"]
+    iterOFL[i,'FORECATCH'] <- modNother$derived_quants[grep(paste0("ForeCatch_",y,collapse = "|"), modNother$derived_quants$Label),"Value"]
+    iterOFL[i,'DEADBIO'] <-  modNother$timeseries[, grepl('Yr|dead[(]B', names(modNother$timeseries))] %>% filter(Yr == y) %>% select(-Yr) %>% rowSums(.)
+    iterOFL[i,'REALIZEDBUFFER'] <-    round(iterOFL[i,'FORECATCH']/iterOFL[i,'OFL'],3)
+    iterOFL[i,'TRUEBUFFER_045'] <-    c(NA,NA,0.857,
+                                        0.849,
+                                        0.841,
+                                        0.833,
+                                        0.826,
+                                        0.818,
+                                        0.810,
+                                        0.803,
+                                        0.795,
+                                        0.788)[y-2018]#round(qlnorm(0.45,0,0.5*(1+c(1:10)*0.075)),3)[y-2020]
+    iterOFL[i,'TRUEBUFFER_025'] <-   NA # round(qlnorm(0.25,0,0.5*(1+c(1:10)*0.075)),3)[y-2020]
+    i <- i+1
+  } ## end yrs
+} ## end dirs
+iterOFL ## th
